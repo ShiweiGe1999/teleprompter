@@ -32,7 +32,7 @@ function rendererUrl(query = ''): string {
 
 function secureWebPreferences(): Electron.WebPreferences {
   return {
-    preload: join(dirname, '../preload/index.js'),
+    preload: join(dirname, '../preload/index.cjs'),
     contextIsolation: true,
     nodeIntegration: false,
     sandbox: true,
