@@ -1,43 +1,40 @@
+<div align="center">
+
 # Script Overlay
 
-Script Overlay is a private, offline teleprompter for Windows and macOS. Write or paste scripts in the editor, then open them in a transparent always-on-top window that can be locked so clicks pass through to the app underneath.
+**A private teleprompter that stays visible over any app.**
 
-## Features
+Write your script, open the always-on-top overlay, and keep your delivery on track while recording tutorials, demos, presentations, or videos. Everything stays on your device.
 
-- Local script library with search, duplicate, delete, and autosave
-- Smooth timed scrolling with saved progress
-- Transparent, resizable, always-on-top overlay
-- Click-through lock mode with tray and global-shortcut recovery
-- Font, color, opacity, alignment, width, and speed controls
-- Optional best-effort screen-capture protection
-- No accounts, analytics, cloud storage, or runtime network requests
+[**Download for Windows**](https://github.com/ShiweiGe1999/teleprompter/releases/latest) · [**Watch the 36-second demo**](docs/media/demo.mp4) · [**Support development**](https://buymeacoffee.com/shiweige)
 
-## Development
+<a href="https://buymeacoffee.com/shiweige"><img src="https://cdn.buymeacoffee.com/buttons/v2/default-yellow.png" alt="Buy me a coffee" height="48"></a>
 
-Requirements: Node.js 20 or newer and npm.
+</div>
 
-```sh
-npm install
-npm run dev
-```
+![Script Overlay running transparently over another application](docs/media/overlay.png)
 
-Quality checks:
+## Why Script Overlay
 
-```sh
-npm run typecheck
-npm test
-npm run build
-```
+- **Read over any app** — keep a resizable, always-on-top script beside your camera or recording controls.
+- **Stay hands-free** — use smooth auto-scroll, global shortcuts, and saved reading progress.
+- **See only what you need** — make the overlay transparent and choose your font, colors, opacity, alignment, width, and speed.
+- **Work without interruptions** — lock the overlay to pass clicks through to the app underneath, then recover it from the tray or a shortcut.
+- **Keep scripts private** — no account, analytics, cloud storage, or runtime network requests.
 
-## Packaging
+## See it in action
 
-Build unsigned installers on the target operating system:
+[▶ Watch the 36-second demo](docs/media/demo.mp4)
 
-```sh
-npm run dist
-```
+## Screenshots
 
-Windows produces an NSIS installer. macOS produces DMG and ZIP artifacts for Intel and Apple Silicon. macOS artifacts must be built on a Mac. Because these local builds are unsigned, Windows SmartScreen or macOS Gatekeeper may show a warning.
+### Write and organize scripts
+
+![Script Overlay editor with a local script library and teleprompter content](docs/media/editor.png)
+
+### Tune the reading experience
+
+![Script Overlay settings for theme, reading speed, typography, and transparency](docs/media/settings.png)
 
 ## Global shortcuts
 
@@ -51,6 +48,39 @@ Windows produces an NSIS installer. macOS produces DMG and ZIP artifacts for Int
 
 If another app already owns a shortcut, Script Overlay reports the conflict. The tray menu always remains available to unlock the overlay.
 
-## Privacy note
+## Privacy
 
-“Hide from screen capture” uses Electron's operating-system content-protection API. It is best-effort and cannot guarantee exclusion from every capture or recording tool.
+“Hide from screen capture” uses Electron’s operating-system content-protection API. This is a best-effort safeguard and may not work with every capture or recording tool.
+
+## Development
+
+Requirements: Node.js 20 or newer and pnpm.
+
+```sh
+pnpm install
+pnpm dev
+```
+
+Quality checks:
+
+```sh
+pnpm typecheck
+pnpm test
+pnpm build
+```
+
+## Build an installer
+
+Build unsigned installers on the target operating system:
+
+```sh
+pnpm dist
+```
+
+Windows produces an NSIS installer. macOS produces DMG and ZIP artifacts for Intel and Apple Silicon. macOS artifacts must be built on a Mac. Because these local builds are unsigned, Windows SmartScreen or macOS Gatekeeper may show a warning.
+
+## Support the project
+
+If Script Overlay helps you record more comfortably, you can [buy me a coffee](https://buymeacoffee.com/shiweige). Your support helps fund maintenance, testing, and future improvements.
+
+<a href="https://buymeacoffee.com/shiweige"><img src="https://cdn.buymeacoffee.com/buttons/v2/default-yellow.png" alt="Buy me a coffee" height="48"></a>
