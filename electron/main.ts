@@ -248,7 +248,13 @@ function registerIpc(): void {
   }
   ipcMain.handle('scripts:list', (event) => { validSender(event); return store.listScripts() })
   ipcMain.handle('scripts:save', (event, input) => { validSender(event); const result = store.saveScript(input); broadcastScripts(); return result })
-  ipcMain.handle('scripts:remove', (event, id) => { validSender(event); store.removeScript(parseId(id)); broadcastScripts() })
+  ipcMain.handle('scripts:remove', (event, id) => {
+    validSender(event)
+    const parsedId = parseId(id)
+    if (overlayState.scriptId === parsedId) overlayWindow?.close()
+    store.removeScript(parsedId)
+    broadcastScripts()
+  })
   ipcMain.handle('scripts:duplicate', (event, id) => { validSender(event); const result = store.duplicateScript(parseId(id)); broadcastScripts(); return result })
   ipcMain.handle('scripts:update-position', (event, id, position) => {
     validSender(event)
