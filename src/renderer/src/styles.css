@@ -78,6 +78,8 @@ svg { flex: none; }
 .ghost { padding: 8px 11px; border: 1px solid var(--border); background: var(--surface); color: var(--text-secondary); }
 .ghost:hover { border-color: var(--border-strong); background: var(--raised); color: var(--text); }
 .ghost.icon-only { width: 40px; padding: 0; }
+.ghost.danger-button { color: var(--danger); }
+.ghost.danger-button:hover { border-color: color-mix(in srgb, var(--danger) 55%, var(--border)); background: var(--danger-soft); color: var(--danger); }
 .text-button { min-height: 30px; padding: 3px 6px; background: transparent; color: var(--accent); }
 
 .search { display: flex; align-items: center; gap: 7px; margin: 14px 0 8px; padding: 0 8px 0 10px; border: 1px solid var(--border); border-radius: 9px; background: var(--surface); color: var(--text-tertiary); }
