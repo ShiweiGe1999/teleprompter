@@ -1,4 +1,6 @@
 export type TextAlignment = 'left' | 'center'
+export type ThemePreference = 'system' | 'light' | 'dark'
+export type UiCommand = 'new-script' | 'focus-search' | 'open-settings'
 
 export interface Script {
   id: string
@@ -18,7 +20,8 @@ export interface WindowBounds {
 }
 
 export interface AppSettings {
-  version: 1
+  version: 2
+  theme: ThemePreference
   scrollSpeed: number
   fontSize: number
   lineHeight: number
@@ -26,8 +29,11 @@ export interface AppSettings {
   textColor: string
   backgroundColor: string
   backgroundOpacity: number
+  transparentMode: boolean
   overlayWidth: number
   hideFromCapture: boolean
+  hasSeenLockHint: boolean
+  hasSeenTrayNotice: boolean
   overlayBounds?: WindowBounds
 }
 
@@ -83,6 +89,7 @@ export interface ScriptOverlayApi {
     command(command: OverlayCommand): Promise<void>
     getState(): Promise<OverlayState>
     updateState(patch: Partial<Pick<OverlayState, 'playing' | 'locked' | 'position'>>): Promise<void>
+    confirmLock(): Promise<void>
   }
   shortcuts: {
     status(): Promise<ShortcutRegistrationResult[]>
@@ -92,6 +99,8 @@ export interface ScriptOverlayApi {
     onSettingsChanged(callback: (settings: AppSettings) => void): () => void
     onOverlayStateChanged(callback: (state: OverlayState) => void): () => void
     onScriptsChanged(callback: () => void): () => void
+    onUiCommand(callback: (command: UiCommand) => void): () => void
+    onLockHintRequested(callback: () => void): () => void
   }
 }
 

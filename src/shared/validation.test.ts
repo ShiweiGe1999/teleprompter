@@ -16,7 +16,7 @@ describe('validation', () => {
   })
 
   it('accepts bounded settings patches', () => {
-    expect(parseSettingsPatch({ fontSize: 72, backgroundOpacity: 0.5 })).toEqual({ fontSize: 72, backgroundOpacity: 0.5 })
+    expect(parseSettingsPatch({ fontSize: 72, backgroundOpacity: 0.5, transparentMode: true })).toEqual({ fontSize: 72, backgroundOpacity: 0.5, transparentMode: true })
     expect(() => parseSettingsPatch({ fontSize: 12 })).toThrow()
   })
 })

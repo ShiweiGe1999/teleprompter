@@ -1,7 +1,8 @@
 import type { AppSettings, OverlayState } from './types'
 
 export const DEFAULT_SETTINGS: AppSettings = {
-  version: 1,
+  version: 2,
+  theme: 'system',
   scrollSpeed: 50,
   fontSize: 48,
   lineHeight: 1.5,
@@ -9,8 +10,11 @@ export const DEFAULT_SETTINGS: AppSettings = {
   textColor: '#ffffff',
   backgroundColor: '#111218',
   backgroundOpacity: 0.7,
+  transparentMode: false,
   overlayWidth: 720,
-  hideFromCapture: false
+  hideFromCapture: false,
+  hasSeenLockHint: false,
+  hasSeenTrayNotice: false
 }
 
 export const DEFAULT_OVERLAY_STATE: OverlayState = {

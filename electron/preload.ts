@@ -1,5 +1,5 @@
 import { contextBridge, ipcRenderer } from 'electron'
-import type { AppSettings, OverlayCommand, OverlayState, ScriptOverlayApi } from '@shared/types'
+import type { AppSettings, OverlayCommand, OverlayState, ScriptOverlayApi, UiCommand } from '@shared/types'
 
 const api: ScriptOverlayApi = {
   scripts: {
@@ -18,7 +18,8 @@ const api: ScriptOverlayApi = {
     close: () => ipcRenderer.invoke('overlay:close'),
     command: (command) => ipcRenderer.invoke('overlay:command', command),
     getState: () => ipcRenderer.invoke('overlay:get-state'),
-    updateState: (patch) => ipcRenderer.invoke('overlay:update-state', patch)
+    updateState: (patch) => ipcRenderer.invoke('overlay:update-state', patch),
+    confirmLock: () => ipcRenderer.invoke('overlay:confirm-lock')
   },
   shortcuts: {
     status: () => ipcRenderer.invoke('shortcuts:status')
@@ -43,6 +44,16 @@ const api: ScriptOverlayApi = {
       const listener = () => callback()
       ipcRenderer.on('scripts:changed', listener)
       return () => ipcRenderer.removeListener('scripts:changed', listener)
+    },
+    onUiCommand(callback) {
+      const listener = (_event: Electron.IpcRendererEvent, command: UiCommand) => callback(command)
+      ipcRenderer.on('ui:command', listener)
+      return () => ipcRenderer.removeListener('ui:command', listener)
+    },
+    onLockHintRequested(callback) {
+      const listener = () => callback()
+      ipcRenderer.on('overlay:lock-hint-requested', listener)
+      return () => ipcRenderer.removeListener('overlay:lock-hint-requested', listener)
     }
   }
 }

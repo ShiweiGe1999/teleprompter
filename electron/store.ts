@@ -5,7 +5,7 @@ import { normalizeSettings, parseScriptInput } from '@shared/validation'
 import type { AppSettings, Script, ScriptInput } from '@shared/types'
 
 interface StoreShape {
-  dataVersion: 1
+  dataVersion: 2
   scripts: Script[]
   settings: AppSettings
 }
@@ -13,11 +13,12 @@ interface StoreShape {
 export class AppStore {
   private readonly store = new Store<StoreShape>({
     name: 'script-overlay-data',
-    defaults: { dataVersion: 1, scripts: [], settings: DEFAULT_SETTINGS }
+    defaults: { dataVersion: 2, scripts: [], settings: DEFAULT_SETTINGS }
   })
 
   constructor() {
     this.store.set('settings', normalizeSettings(this.store.get('settings')))
+    this.store.set('dataVersion', 2)
     const scripts = this.store.get('scripts', []).filter(isStoredScript)
     this.store.set('scripts', scripts)
   }

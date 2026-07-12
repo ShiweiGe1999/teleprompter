@@ -1,11 +1,11 @@
-import { app, BrowserWindow, globalShortcut, ipcMain, Menu, nativeImage, screen, Tray } from 'electron'
+import { app, BrowserWindow, globalShortcut, ipcMain, Menu, nativeImage, nativeTheme, Notification, screen, Tray } from 'electron'
 import { join } from 'node:path'
 import { fileURLToPath, pathToFileURL } from 'node:url'
 import { z } from 'zod'
 import { DEFAULT_OVERLAY_STATE, SHORTCUTS } from '@shared/defaults'
 import { recoverBounds } from '@shared/bounds'
 import { clampPosition, parseId, parseSettingsPatch } from '@shared/validation'
-import type { AppSettings, OverlayCommand, OverlayState, ShortcutRegistrationResult, WindowBounds } from '@shared/types'
+import type { AppSettings, OverlayCommand, OverlayState, ShortcutRegistrationResult, UiCommand } from '@shared/types'
 import { AppStore } from './store'
 
 const dirname = fileURLToPath(new URL('.', import.meta.url))
@@ -40,6 +40,29 @@ function secureWebPreferences(): Electron.WebPreferences {
   }
 }
 
+function windowBackground(): string {
+  return nativeTheme.shouldUseDarkColors ? '#0d0e13' : '#f7f7fa'
+}
+
+function iconPath(): string {
+  const fileName = process.platform === 'win32' ? 'icon.ico' : 'icon.png'
+  return app.isPackaged ? join(process.resourcesPath, fileName) : join(app.getAppPath(), 'build', fileName)
+}
+
+function applicationIcon(): Electron.NativeImage {
+  const icon = nativeImage.createFromPath(iconPath())
+  if (!icon.isEmpty()) return icon
+  const fallback = `<svg xmlns="http://www.w3.org/2000/svg" width="64" height="64"><rect width="64" height="64" rx="15" fill="#071317"/><path d="M15 18h34M15 31h34M15 44h24" stroke="#43f5d0" stroke-width="6" stroke-linecap="round"/></svg>`
+  return nativeImage.createFromDataURL(`data:image/svg+xml;base64,${Buffer.from(fallback).toString('base64')}`)
+}
+
+function sendUiCommand(command: UiCommand): void {
+  showEditor()
+  if (!mainWindow) return
+  if (mainWindow.webContents.isLoading()) mainWindow.webContents.once('did-finish-load', () => mainWindow?.webContents.send('ui:command', command))
+  else mainWindow.webContents.send('ui:command', command)
+}
+
 function createMainWindow(): BrowserWindow {
   const window = new BrowserWindow({
     width: 1120,
@@ -47,13 +70,22 @@ function createMainWindow(): BrowserWindow {
     minWidth: 880,
     minHeight: 600,
     title: 'Script Overlay',
-    backgroundColor: '#0d0e13',
+    icon: applicationIcon(),
+    backgroundColor: windowBackground(),
     show: false,
     webPreferences: secureWebPreferences()
   })
-  window.removeMenu()
+  if (process.platform !== 'darwin') window.removeMenu()
   void window.loadURL(rendererUrl())
   window.once('ready-to-show', () => window.show())
+  window.on('close', () => {
+    if (process.platform !== 'win32' || isQuitting) return
+    const settings = store.getSettings()
+    if (!settings.hasSeenTrayNotice && Notification.isSupported()) {
+      new Notification({ title: 'Script Overlay is still running', body: 'Use the tray icon to reopen the editor or quit the app.' }).show()
+      store.updateSettings({ hasSeenTrayNotice: true })
+    }
+  })
   window.on('closed', () => { mainWindow = null })
   window.webContents.setWindowOpenHandler(() => ({ action: 'deny' }))
   window.webContents.on('will-navigate', (event) => event.preventDefault())
@@ -76,6 +108,15 @@ async function showOverlay(scriptId: string, restart: boolean): Promise<void> {
   const script = store.getScript(parseId(scriptId))
   if (!script) throw new Error('Script not found')
   const settings = store.getSettings()
+  if (overlayWindow && overlayState.scriptId === script.id && !restart) {
+    overlayWindow.setIgnoreMouseEvents(false)
+    overlayState.locked = false
+    overlayWindow.show()
+    overlayWindow.focus()
+    broadcastState()
+    updateTrayMenu()
+    return
+  }
   overlayState = {
     scriptId: script.id,
     playing: false,
@@ -117,7 +158,8 @@ async function showOverlay(scriptId: string, restart: boolean): Promise<void> {
   overlayWindow.webContents.setWindowOpenHandler(() => ({ action: 'deny' }))
   overlayWindow.webContents.on('will-navigate', (event) => event.preventDefault())
   await overlayWindow.loadURL(rendererUrl('?overlay=1'))
-  overlayWindow.once('ready-to-show', () => overlayWindow?.show())
+  overlayWindow.show()
+  overlayWindow.focus()
   overlayWindow.on('move', scheduleBoundsSave)
   overlayWindow.on('resize', scheduleBoundsSave)
   overlayWindow.on('closed', () => {
@@ -146,6 +188,15 @@ function applyLock(locked: boolean): void {
   overlayWindow?.setIgnoreMouseEvents(locked, { forward: true })
 }
 
+function requestLock(): boolean {
+  if (!store.getSettings().hasSeenLockHint) {
+    overlayWindow?.webContents.send('overlay:lock-hint-requested')
+    return false
+  }
+  applyLock(true)
+  return true
+}
+
 function executeOverlayCommand(raw: OverlayCommand): void {
   const command = overlayCommandSchema.parse(raw)
   if (!overlayWindow && command !== 'unlock') return
@@ -154,8 +205,11 @@ function executeOverlayCommand(raw: OverlayCommand): void {
     case 'play': overlayState.playing = true; break
     case 'pause': overlayState.playing = false; break
     case 'restart': overlayState.position = 0; overlayState.playing = false; break
-    case 'toggle-lock': applyLock(!overlayState.locked); break
-    case 'lock': applyLock(true); break
+    case 'toggle-lock':
+      if (overlayState.locked) applyLock(false)
+      else if (!requestLock()) return
+      break
+    case 'lock': if (!requestLock()) return; break
     case 'unlock': applyLock(false); overlayWindow?.show(); overlayWindow?.focus(); break
     case 'speed-up': updateSpeed(5); break
     case 'speed-down': updateSpeed(-5); break
@@ -206,10 +260,15 @@ function registerIpc(): void {
   ipcMain.handle('settings:get', (event) => { validSender(event); return store.getSettings() })
   ipcMain.handle('settings:update', (event, patch) => {
     validSender(event)
-    const settings = store.updateSettings(parseSettingsPatch(patch))
+    const parsedPatch = parseSettingsPatch(patch)
+    const settings = store.updateSettings(parsedPatch)
+    if (parsedPatch.theme !== undefined) {
+      nativeTheme.themeSource = settings.theme
+      mainWindow?.setBackgroundColor(windowBackground())
+    }
     overlayState.scrollSpeed = settings.scrollSpeed
     overlayWindow?.setContentProtection(settings.hideFromCapture)
-    if (overlayWindow && patch.overlayWidth) overlayWindow.setSize(settings.overlayWidth, overlayWindow.getBounds().height)
+    if (overlayWindow && parsedPatch.overlayWidth) overlayWindow.setSize(settings.overlayWidth, overlayWindow.getBounds().height)
     broadcastSettings(settings)
     return settings
   })
@@ -229,7 +288,52 @@ function registerIpc(): void {
     broadcastState()
     updateTrayMenu()
   })
+  ipcMain.handle('overlay:confirm-lock', (event) => {
+    validSender(event)
+    const settings = store.updateSettings({ hasSeenLockHint: true })
+    applyLock(true)
+    overlayWindow?.webContents.send('overlay:command', 'lock')
+    broadcastSettings(settings)
+    broadcastState()
+    updateTrayMenu()
+  })
   ipcMain.handle('shortcuts:status', (event) => { validSender(event); return shortcutStatus })
+}
+
+function createApplicationMenu(): void {
+  if (process.platform !== 'darwin') {
+    Menu.setApplicationMenu(null)
+    return
+  }
+  Menu.setApplicationMenu(Menu.buildFromTemplate([
+    {
+      label: app.name,
+      submenu: [
+        { role: 'about' },
+        { type: 'separator' },
+        { label: 'Settings…', accelerator: 'Command+,', click: () => sendUiCommand('open-settings') },
+        { type: 'separator' },
+        { role: 'services' },
+        { type: 'separator' },
+        { role: 'hide' },
+        { role: 'hideOthers' },
+        { role: 'unhide' },
+        { type: 'separator' },
+        { role: 'quit' }
+      ]
+    },
+    {
+      label: 'File',
+      submenu: [
+        { label: 'New Script', accelerator: 'Command+N', click: () => sendUiCommand('new-script') },
+        { label: 'Find', accelerator: 'Command+F', click: () => sendUiCommand('focus-search') },
+        { type: 'separator' },
+        { role: 'close' }
+      ]
+    },
+    { role: 'editMenu' },
+    { role: 'windowMenu' }
+  ]))
 }
 
 function registerShortcuts(): void {
@@ -240,13 +344,8 @@ function registerShortcuts(): void {
   }))
 }
 
-function trayIcon(): Electron.NativeImage {
-  const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="32" height="32"><rect x="3" y="3" width="26" height="26" rx="7" fill="#7c5cff"/><path d="M10 11h12M10 16h12M10 21h8" stroke="white" stroke-width="2.5" stroke-linecap="round"/></svg>`
-  return nativeImage.createFromDataURL(`data:image/svg+xml;base64,${Buffer.from(svg).toString('base64')}`).resize({ width: 16, height: 16 })
-}
-
 function createTray(): void {
-  tray = new Tray(trayIcon())
+  tray = new Tray(applicationIcon())
   tray.setToolTip('Script Overlay')
   tray.on('double-click', showEditor)
   updateTrayMenu()
@@ -272,11 +371,14 @@ function updateTrayMenu(): void {
 
 app.whenReady().then(() => {
   store = new AppStore()
+  nativeTheme.themeSource = store.getSettings().theme
   registerIpc()
+  createApplicationMenu()
   mainWindow = createMainWindow()
   registerShortcuts()
   createTray()
   app.on('activate', showEditor)
+  nativeTheme.on('updated', () => mainWindow?.setBackgroundColor(windowBackground()))
 })
 
 app.on('window-all-closed', () => {
