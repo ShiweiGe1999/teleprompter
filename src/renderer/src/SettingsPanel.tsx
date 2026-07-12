@@ -1,6 +1,7 @@
 import { useEffect, useRef } from 'react'
 import type { KeyboardEvent, RefObject } from 'react'
 import type { AppSettings, ShortcutRegistrationResult, ThemePreference } from '@shared/types'
+import { DEFAULT_SETTINGS } from '@shared/defaults'
 import { Icon } from './Icons'
 
 interface Props {
@@ -38,7 +39,7 @@ export function SettingsPanel({ settings, shortcuts, triggerRef, onClose, onChan
   return (
     <div className="modal-backdrop" onMouseDown={(event) => event.target === event.currentTarget && onClose()}>
       <section ref={panelRef} className="settings-panel" role="dialog" aria-modal="true" aria-labelledby="settings-title" onKeyDown={handleDialogKey}>
-        <header><div><h2 id="settings-title" ref={headingRef} tabIndex={-1}>Settings</h2><p>Personalize the editor and teleprompter.</p></div><button className="icon-button" aria-label="Close settings" title="Close settings" onClick={onClose}><Icon name="close" /></button></header>
+        <header><div><h2 id="settings-title" ref={headingRef} tabIndex={-1}>Settings</h2><p>Personalize the editor and teleprompter.</p></div><div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}><button className="text-button" onClick={() => { if (window.confirm("Reset all settings to default?")) void update(DEFAULT_SETTINGS) }}>Reset defaults</button><button className="icon-button" aria-label="Close settings" title="Close settings" onClick={onClose}><Icon name="close" /></button></div></header>
         <div className="settings-scroll">
           <div className="setting-group"><h3>Appearance</h3>
             <fieldset className="theme-picker"><legend>App theme</legend>{(['system', 'light', 'dark'] as ThemePreference[]).map((theme) => <label key={theme} className={settings.theme === theme ? 'selected' : ''}><input type="radio" name="theme" value={theme} checked={settings.theme === theme} onChange={() => void update({ theme })} /><Icon name={theme === 'system' ? 'monitor' : theme === 'light' ? 'sun' : 'moon'} /><span>{theme[0].toUpperCase() + theme.slice(1)}</span></label>)}</fieldset>
