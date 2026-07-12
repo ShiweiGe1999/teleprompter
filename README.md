@@ -6,7 +6,7 @@
 
 Write your script, open the always-on-top overlay, and keep your delivery on track while recording tutorials, demos, presentations, or videos. Everything stays on your device.
 
-[**Download for Windows**](https://github.com/ShiweiGe1999/teleprompter/releases/latest) · [**Watch the 36-second demo**](docs/media/demo.mp4) · [**Support development**](https://buymeacoffee.com/shiweige)
+[**Download for Windows**](https://github.com/ShiweiGe1999/teleprompter/releases/latest) · [**Watch the 36-second demo**](https://github.com/ShiweiGe1999/teleprompter/releases/download/v0.1.0/demo.mp4) · [**Support development**](https://buymeacoffee.com/shiweige)
 
 <a href="https://buymeacoffee.com/shiweige"><img src="https://cdn.buymeacoffee.com/buttons/v2/default-yellow.png" alt="Buy me a coffee" height="48"></a>
 
@@ -24,7 +24,7 @@ Write your script, open the always-on-top overlay, and keep your delivery on tra
 
 ## See it in action
 
-[▶ Watch the 36-second demo](docs/media/demo.mp4)
+[▶ Watch the 36-second demo](https://github.com/ShiweiGe1999/teleprompter/releases/download/v0.1.0/demo.mp4)
 
 ## Screenshots
 
