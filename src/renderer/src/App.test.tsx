@@ -66,8 +66,7 @@ describe('App script deletion', () => {
 
     render(<App />)
     await screen.findByDisplayValue('First script')
-    await user.click(screen.getByRole('button', { name: 'More script actions' }))
-    await user.click(screen.getByRole('menuitem', { name: 'Delete script' }))
+    await user.click(screen.getByRole('button', { name: 'Delete script' }))
 
     await waitFor(() => expect(remove).toHaveBeenCalledWith('script-1'))
     expect(confirm).toHaveBeenCalledWith('Delete “First script”? This cannot be undone.')
