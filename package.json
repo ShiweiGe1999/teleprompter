@@ -6,6 +6,10 @@
   "author": "Script Overlay contributors",
   "license": "MIT",
   "type": "module",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/ShiweiGe1999/teleprompter.git"
+  },
   "scripts": {
     "dev": "electron-vite dev",
     "build": "tsc --noEmit -p tsconfig.node.json && tsc --noEmit -p tsconfig.web.json && electron-vite build",
