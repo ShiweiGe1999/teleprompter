@@ -29,6 +29,7 @@ export const SHORTCUTS = [
   { accelerator: 'CommandOrControl+Shift+Space', action: 'toggle-play' },
   { accelerator: 'CommandOrControl+Shift+L', action: 'toggle-lock' },
   { accelerator: 'CommandOrControl+Shift+Left', action: 'rewind' },
+  { accelerator: 'CommandOrControl+Shift+Right', action: 'forward' },
   { accelerator: 'CommandOrControl+Shift+Up', action: 'speed-up' },
   { accelerator: 'CommandOrControl+Shift+Down', action: 'speed-down' }
 ] as const
