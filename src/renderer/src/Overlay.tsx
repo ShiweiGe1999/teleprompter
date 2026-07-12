@@ -20,21 +20,48 @@ export function Overlay() {
 
   const applyCommand = useCallback((command: OverlayCommand) => {
     setOverflowOpen(false)
-    setState((current) => {
-      switch (command) {
-        case 'toggle-play': return { ...current, playing: !current.playing }
-        case 'play': return { ...current, playing: true }
-        case 'pause': return { ...current, playing: false }
-        case 'restart': return { ...current, playing: false, position: 0 }
-        case 'rewind': return { ...current, position: seekBySeconds(current.position, current.scrollSpeed, -5) }
-        case 'forward': return { ...current, position: seekBySeconds(current.position, current.scrollSpeed, 5) }
-        case 'speed-up': return { ...current, scrollSpeed: Math.min(200, current.scrollSpeed + 5) }
-        case 'speed-down': return { ...current, scrollSpeed: Math.max(10, current.scrollSpeed - 5) }
-        case 'toggle-lock': return { ...current, locked: !current.locked }
-        case 'lock': return { ...current, locked: true }
-        case 'unlock': return { ...current, locked: false }
+    const current = stateRef.current
+    switch (command) {
+      case 'toggle-play':
+        setState((c) => ({ ...c, playing: !c.playing }))
+        break
+      case 'play':
+        setState((c) => ({ ...c, playing: true }))
+        break
+      case 'pause':
+        setState((c) => ({ ...c, playing: false }))
+        break
+      case 'restart':
+        setState((c) => ({ ...c, playing: false, position: 0 }))
+        break
+      case 'rewind': {
+        const nextPos = seekBySeconds(current.position, current.scrollSpeed, -5)
+        setState((c) => ({ ...c, position: nextPos }))
+        void window.scriptOverlay.overlay.updateState({ position: nextPos })
+        break
       }
-    })
+      case 'forward': {
+        const nextPos = seekBySeconds(current.position, current.scrollSpeed, 5)
+        setState((c) => ({ ...c, position: nextPos }))
+        void window.scriptOverlay.overlay.updateState({ position: nextPos })
+        break
+      }
+      case 'speed-up':
+        setState((c) => ({ ...c, scrollSpeed: Math.min(200, c.scrollSpeed + 5) }))
+        break
+      case 'speed-down':
+        setState((c) => ({ ...c, scrollSpeed: Math.max(10, c.scrollSpeed - 5) }))
+        break
+      case 'toggle-lock':
+        setState((c) => ({ ...c, locked: !c.locked }))
+        break
+      case 'lock':
+        setState((c) => ({ ...c, locked: true }))
+        break
+      case 'unlock':
+        setState((c) => ({ ...c, locked: false }))
+        break
+    }
   }, [])
 
   useEffect(() => {
@@ -64,7 +91,7 @@ export function Overlay() {
         const max = scrollRef.current ? scrollRef.current.scrollHeight - scrollRef.current.clientHeight : Infinity
         const position = Math.min(max, nextScrollPosition(current.position, current.scrollSpeed, time - lastFrame.current))
         if (scrollRef.current) scrollRef.current.scrollTop = position
-        setState((value) => ({ ...value, position, playing: position < max }))
+        setState((value) => ({ ...value, position, playing: value.playing && position < max }))
         if (script && time - lastSaved.current > 1000) {
           lastSaved.current = time
           void window.scriptOverlay.scripts.updatePosition(script.id, position)
