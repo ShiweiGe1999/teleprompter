@@ -24,7 +24,7 @@ Write your script, open the always-on-top overlay, and keep your delivery on tra
 
 ## See it in action
 
-https://github.com/ShiweiGe1999/teleprompter/releases/download/v0.1.0/demo.mp4
+docs/media/demo.mp4
 
 ## Screenshots
 
