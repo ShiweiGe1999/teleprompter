@@ -10,8 +10,8 @@ permissions:
   contents: write
 
 jobs:
-  release:
-    name: Build & Release (${{ matrix.os }})
+  build:
+    name: Build (${{ matrix.os }})
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
@@ -40,10 +40,43 @@ jobs:
           pnpm typecheck
           pnpm test
 
-      - name: Build production bundle
-        run: pnpm build
+      - name: Build & Package App
+        run: pnpm dist --publish never
 
-      - name: Package and publish
-        run: pnpm exec electron-builder --publish always
+      - name: Upload installers
+        uses: actions/upload-artifact@v4
+        with:
+          name: installers-${{ matrix.os }}
+          path: |
+            release/*.exe
+            release/*.dmg
+            release/*.zip
+          if-no-files-found: error
+
+  publish:
+    name: Publish Release
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - name: Download macOS installers
+        uses: actions/download-artifact@v4
+        with:
+          name: installers-macos-latest
+          path: dist-artifacts
+
+      - name: Download Windows installers
+        uses: actions/download-artifact@v4
+        with:
+          name: installers-windows-latest
+          path: dist-artifacts
+
+      - name: Create Release
+        uses: softprops/action-gh-release@v2
+        with:
+          draft: true
+          files: |
+            dist-artifacts/*.exe
+            dist-artifacts/*.dmg
+            dist-artifacts/*.zip
         env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
