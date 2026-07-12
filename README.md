@@ -24,7 +24,7 @@ Write your script, open the always-on-top overlay, and keep your delivery on tra
 
 ## See it in action
 
-![Script Overlay Demo](docs/media/demo.gif)
+<img src="docs/media/demo.gif" width="100%" alt="Script Overlay Demo" />
 
 ## Screenshots
 
