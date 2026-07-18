@@ -4,7 +4,7 @@ import { fileURLToPath, pathToFileURL } from 'node:url'
 import { z } from 'zod'
 import { DEFAULT_OVERLAY_STATE, SHORTCUTS } from '@shared/defaults'
 import { recoverBounds } from '@shared/bounds'
-import { seekOverlayState } from '@shared/scrolling'
+
 import { clampPosition, parseId, parseSettingsPatch } from '@shared/validation'
 import type { AppSettings, OverlayCommand, OverlayState, ShortcutRegistrationResult, UiCommand } from '@shared/types'
 import { AppStore } from './store'
@@ -216,12 +216,7 @@ function executeOverlayCommand(raw: OverlayCommand): void {
     case 'speed-up': updateSpeed(5); break
     case 'speed-down': updateSpeed(-5); break
     case 'rewind':
-      overlayState = seekOverlayState(overlayState, -5)
-      sendRendererCommand = false
-      break
     case 'forward':
-      overlayState = seekOverlayState(overlayState, 5)
-      sendRendererCommand = false
       break
   }
   if (!sendRendererCommand) {
