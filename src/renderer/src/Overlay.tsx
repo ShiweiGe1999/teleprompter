@@ -32,16 +32,22 @@ export function Overlay() {
         setState((c) => ({ ...c, playing: false }))
         break
       case 'restart':
+        stateRef.current.position = 0
+        if (scrollRef.current) scrollRef.current.scrollTop = 0
         setState((c) => ({ ...c, playing: false, position: 0 }))
         break
       case 'rewind': {
         const nextPos = seekBySeconds(current.position, current.scrollSpeed, -5)
+        stateRef.current.position = nextPos
+        if (scrollRef.current) scrollRef.current.scrollTop = nextPos
         setState((c) => ({ ...c, position: nextPos }))
         void window.scriptOverlay.overlay.updateState({ position: nextPos })
         break
       }
       case 'forward': {
         const nextPos = seekBySeconds(current.position, current.scrollSpeed, 5)
+        stateRef.current.position = nextPos
+        if (scrollRef.current) scrollRef.current.scrollTop = nextPos
         setState((c) => ({ ...c, position: nextPos }))
         void window.scriptOverlay.overlay.updateState({ position: nextPos })
         break
@@ -74,7 +80,10 @@ export function Overlay() {
     const cleanups = [
       window.scriptOverlay.events.onOverlayCommand(applyCommand),
       window.scriptOverlay.events.onSettingsChanged(setSettings),
-      window.scriptOverlay.events.onOverlayStateChanged((next) => setState((current) => ({ ...current, ...next }))),
+      window.scriptOverlay.events.onOverlayStateChanged((next) => setState((current) => {
+        const { position, ...rest } = next
+        return { ...current, ...rest }
+      })),
       window.scriptOverlay.events.onLockHintRequested(() => setLockHintOpen(true))
     ]
     return () => cleanups.forEach((cleanup) => cleanup())
@@ -83,6 +92,18 @@ export function Overlay() {
   useEffect(() => {
     if (scrollRef.current && Math.abs(scrollRef.current.scrollTop - state.position) > 1) scrollRef.current.scrollTop = state.position
   }, [state.position])
+
+  const wasPlaying = useRef(state.playing)
+  useEffect(() => {
+    if (wasPlaying.current && !state.playing && script) {
+      void window.scriptOverlay.scripts.updatePosition(script.id, state.position)
+    }
+    wasPlaying.current = state.playing
+  }, [state.playing, script, state.position])
+
+  useEffect(() => {
+    setState((c) => ({ ...c, scrollSpeed: settings.scrollSpeed }))
+  }, [settings.scrollSpeed])
 
   useEffect(() => {
     function tick(time: number) {
